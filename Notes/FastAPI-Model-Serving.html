@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exercise 7 — FastAPI Model Serving with Agentic-Ops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #080c14;
+    --bg2:       #0d1320;
+    --bg3:       #131927;
+    --surface:   #1a2235;
+    --border:    #1f2d44;
+    --teal:      #00e5c0;
+    --teal-dim:  #00a88c;
+    --coral:     #ff6b6b;
+    --amber:     #ffc14d;
+    --blue:      #4d9fff;
+    --purple:    #b06bff;
+    --green:     #5bdb8b;
+    --text:      #d8e4f0;
+    --text-dim:  #7a93b0;
+    --text-faint:#3d5570;
+    --nav-w:     260px;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-body: 'DM Sans', sans-serif;
+    --font-head: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.7;
+    display: flex;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ═══════════════════════════════════════ SIDEBAR ══ */
+  nav {
+    width: var(--nav-w);
+    min-height: 100vh;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    position: fixed;
+    top: 0; left: 0;
+    overflow-y: auto;
+    z-index: 100;
+    padding: 0 0 40px;
+  }
+
+  .nav-brand {
+    padding: 28px 24px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+
+  .nav-brand .badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    color: var(--teal);
+    background: rgba(0,229,192,.08);
+    border: 1px solid rgba(0,229,192,.2);
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-bottom: 8px;
+  }
+
+  .nav-brand h2 {
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .nav-section-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    padding: 16px 24px 6px;
+  }
+
+  nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 24px;
+    text-decoration: none;
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 400;
+    transition: all .15s;
+    border-left: 2px solid transparent;
+  }
+
+  nav a:hover { color: var(--text); background: rgba(255,255,255,.03); }
+  nav a.active { color: var(--teal); border-left-color: var(--teal); background: rgba(0,229,192,.05); }
+
+  nav a .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--text-faint);
+    flex-shrink: 0;
+    transition: background .15s;
+  }
+  nav a.active .dot { background: var(--teal); }
+
+  /* ═══════════════════════════════════════ MAIN ══ */
+  main {
+    margin-left: var(--nav-w);
+    flex: 1;
+    max-width: 960px;
+    padding: 0 60px 120px;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    padding: 80px 0 60px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(0,229,192,.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .2em;
+    color: var(--teal);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-eyebrow::after {
+    content: '';
+    display: block;
+    height: 1px;
+    width: 60px;
+    background: var(--teal-dim);
+  }
+
+  .hero h1 {
+    font-family: var(--font-head);
+    font-size: clamp(32px, 4vw, 52px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -.02em;
+    color: #fff;
+    margin-bottom: 24px;
+  }
+
+  .hero h1 span { color: var(--teal); }
+
+  .hero-desc {
+    font-size: 17px;
+    color: var(--text-dim);
+    max-width: 580px;
+    line-height: 1.7;
+    margin-bottom: 36px;
+  }
+
+  .hero-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid;
+    font-weight: 500;
+  }
+
+  .tag-teal  { color: var(--teal);   border-color: rgba(0,229,192,.3);   background: rgba(0,229,192,.06); }
+  .tag-coral { color: var(--coral);  border-color: rgba(255,107,107,.3); background: rgba(255,107,107,.06); }
+  .tag-amber { color: var(--amber);  border-color: rgba(255,193,77,.3);  background: rgba(255,193,77,.06); }
+  .tag-blue  { color: var(--blue);   border-color: rgba(77,159,255,.3);  background: rgba(77,159,255,.06); }
+  .tag-purple{ color: var(--purple); border-color: rgba(176,107,255,.3); background: rgba(176,107,255,.06); }
+  .tag-green { color: var(--green);  border-color: rgba(91,219,139,.3);  background: rgba(91,219,139,.06); }
+
+  /* ── Sections ── */
+  section {
+    margin-bottom: 80px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity .5s ease, transform .5s ease;
+  }
+
+  section.visible { opacity: 1; transform: none; }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 10px;
+  }
+
+  h2 {
+    font-family: var(--font-head);
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+    letter-spacing: -.02em;
+  }
+
+  h3 {
+    font-family: var(--font-head);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 32px 0 12px;
+  }
+
+  .section-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 12px 0 28px;
+  }
+
+  p { color: var(--text-dim); margin-bottom: 14px; }
+  p strong { color: var(--text); font-weight: 500; }
+
+  /* ── Objectives grid ── */
+  .objectives-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 20px;
+  }
+
+  .obj-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    transition: border-color .2s;
+  }
+
+  .obj-card:hover { border-color: var(--teal-dim); }
+
+  .obj-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .obj-card h4 {
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .obj-card p {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* ── Layer architecture ── */
+  .layer-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .layer-card {
+    border-radius: 10px;
+    padding: 24px;
+    border: 1px solid;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .layer-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .layer-rest {
+    background: rgba(77,159,255,.04);
+    border-color: rgba(77,159,255,.2);
+  }
+  .layer-rest::before { background: var(--blue); }
+
+  .layer-agent {
+    background: rgba(0,229,192,.04);
+    border-color: rgba(0,229,192,.2);
+  }
+  .layer-agent::before { background: var(--teal); }
+
+  .layer-title {
+    font-family: var(--font-head);
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .layer-rest .layer-title { color: var(--blue); }
+  .layer-agent .layer-title { color: var(--teal); }
+
+  .layer-desc {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .layer-endpoints { list-style: none; }
+  .layer-endpoints li {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-dim);
+  }
+  .layer-endpoints li:last-child { border-bottom: none; }
+
+  .method {
+    font-size: 9.5px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+    letter-spacing: .05em;
+    flex-shrink: 0;
+  }
+  .m-get  { background: rgba(91,219,139,.15);  color: var(--green); }
+  .m-post { background: rgba(255,193,77,.15);  color: var(--amber); }
+
+  /* ── Endpoint cards ── */
+  .endpoint-group { margin-top: 24px; }
+
+  .endpoint-group-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .endpoint-group-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .endpoint-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+
+  .endpoint-card:hover { border-color: rgba(255,255,255,.12); }
+
+  .endpoint-header {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .endpoint-path {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .endpoint-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .endpoint-body {
+    padding: 0 18px 18px;
+    border-top: 1px solid var(--border);
+    display: none;
+  }
+
+  .endpoint-card.open .endpoint-body { display: block; }
+
+  .endpoint-card.open .endpoint-header { background: rgba(255,255,255,.02); }
+
+  /* ── Code blocks ── */
+  .code-block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 14px 0;
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
+
+  .code-header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .code-lang {
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  .code-dots { display: flex; gap: 6px; }
+  .code-dots span {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+
+  .code-body {
+    padding: 18px 20px;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--text-dim);
+  }
+
+  .kw  { color: #c792ea; }
+  .fn  { color: #82aaff; }
+  .st  { color: #c3e88d; }
+  .cm  { color: #546e7a; font-style: italic; }
+  .num { color: #f78c6c; }
+  .dc  { color: var(--teal); }
+  .tx  { color: var(--text-dim); }
+
+  /* ── Architecture flow ── */
+  .flow-diagram {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 32px;
+    margin: 20px 0;
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 8px;
+  }
+
+  .flow-box {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid;
+    white-space: nowrap;
+    font-size: 11.5px;
+  }
+
+  .flow-arrow {
+    color: var(--text-faint);
+    padding: 0 10px;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .flow-client { background: rgba(77,159,255,.08); border-color: rgba(77,159,255,.3); color: var(--blue); }
+  .flow-route  { background: rgba(255,193,77,.08); border-color: rgba(255,193,77,.3); color: var(--amber); }
+  .flow-infer  { background: rgba(0,229,192,.08);  border-color: rgba(0,229,192,.3);  color: var(--teal); }
+  .flow-bg     { background: rgba(176,107,255,.08); border-color: rgba(176,107,255,.3); color: var(--purple); }
+  .flow-note   { color: var(--text-faint); font-size: 11px; padding-left: 8px; }
+
+  /* ── Agent flow ── */
+  .agent-flow {
+    display: grid;
+    grid-template-columns: 1fr 32px 1fr;
+    align-items: start;
+    gap: 0;
+    margin: 20px 0;
+  }
+
+  .agent-side {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  .agent-side-title {
+    font-family: var(--font-head);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .agent-left .agent-side-title { color: var(--purple); }
+  .agent-right .agent-side-title { color: var(--teal); }
+
+  .agent-connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-top: 40px;
+  }
+
+  .agent-step {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 6px 0;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .step-num {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1px solid var(--teal-dim);
+    color: var(--teal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+
+  .agent-arrow {
+    font-size: 16px;
+    color: var(--teal-dim);
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+  }
+
+  /* ── Concept cards ── */
+  .concept-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin-top: 20px;
+  }
+
+  .concept-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 18px;
+    transition: border-color .2s, transform .2s;
+  }
+
+  .concept-card:hover {
+    border-color: rgba(0,229,192,.25);
+    transform: translateY(-2px);
+  }
+
+  .concept-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+
+  .concept-card h4 {
+    font-family: var(--font-head);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .concept-card p {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  /* ── Exercises ── */
+  .exercise-list { margin-top: 16px; }
+
+  .exercise-item {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    background: var(--bg3);
+  }
+
+  .exercise-header {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+  }
+
+  .exercise-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--teal);
+    background: rgba(0,229,192,.1);
+    border: 1px solid rgba(0,229,192,.2);
+    padding: 2px 8px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .exercise-title {
+    font-family: var(--font-head);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .exercise-difficulty {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  .diff-medium { background: rgba(255,193,77,.12); color: var(--amber); }
+  .diff-hard   { background: rgba(255,107,107,.12); color: var(--coral); }
+  .diff-easy   { background: rgba(91,219,139,.12); color: var(--green); }
+
+  .exercise-body {
+    padding: 0 18px 16px;
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    display: none;
+    border-top: 1px solid var(--border);
+  }
+
+  .exercise-item.open .exercise-body { display: block; padding-top: 14px; }
+
+  /* ── Prod table ── */
+  .prod-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+
+  .prod-table th {
+    background: var(--surface);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+  }
+
+  .prod-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-dim);
+    vertical-align: top;
+  }
+
+  .prod-table tr:last-child td { border-bottom: none; }
+  .prod-table tr:hover td { background: rgba(255,255,255,.015); }
+
+  .prod-table td:first-child {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .prod-table td:nth-child(2) { color: var(--coral); font-family: var(--font-mono); font-size: 11.5px; }
+  .prod-table td:nth-child(3) { color: var(--teal);  font-family: var(--font-mono); font-size: 11.5px; }
+
+  /* ── Takeaway cards ── */
+  .takeaway-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 20px;
+  }
+
+  .takeaway-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  .takeaway-card h4 {
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--teal);
+    margin-bottom: 8px;
+  }
+
+  .takeaway-card p {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  /* ── Tests pass display ── */
+  .test-results {
+    background: var(--bg);
+    border: 1px solid rgba(91,219,139,.2);
+    border-radius: 8px;
+    padding: 20px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.8;
+  }
+
+  .test-pass { color: var(--green); }
+  .test-info { color: var(--text-faint); }
+  .test-summary { color: var(--green); font-weight: 700; margin-top: 8px; }
+
+  /* ── Scroll indicator ── */
+  .progress-bar {
+    position: fixed;
+    top: 0; left: var(--nav-w); right: 0;
+    height: 2px;
+    background: rgba(255,255,255,.05);
+    z-index: 200;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--blue));
+    width: 0%;
+    transition: width .1s;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    nav { display: none; }
+    main { margin-left: 0; padding: 0 24px 80px; }
+    .progress-bar { left: 0; }
+    .objectives-grid, .layer-container, .concept-grid, .takeaway-grid { grid-template-columns: 1fr; }
+    .agent-flow { grid-template-columns: 1fr; }
+    .agent-connector { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- ═══ SIDEBAR ══════════════════════════════════════════════════════ -->
+<nav>
+  <div class="nav-brand">
+    <div class="badge">MLOps Series · Ex 07</div>
+    <h2>FastAPI Model Serving</h2>
+  </div>
+
+  <div class="nav-section-label">Contents</div>
+  <a href="#overview" class="active"><span class="dot"></span>Overview</a>
+  <a href="#objectives"><span class="dot"></span>Learning Objectives</a>
+  <a href="#concepts"><span class="dot"></span>Background Concepts</a>
+  <a href="#architecture"><span class="dot"></span>Architecture</a>
+
+  <div class="nav-section-label">API Reference</div>
+  <a href="#ops-endpoints"><span class="dot"></span>Ops Endpoints</a>
+  <a href="#inference-endpoints"><span class="dot"></span>Inference Endpoints</a>
+  <a href="#agent-endpoints"><span class="dot"></span>Agentic-Ops Layer</a>
+
+  <div class="nav-section-label">Deep Dive</div>
+  <a href="#code"><span class="dot"></span>Code Walkthrough</a>
+  <a href="#tests"><span class="dot"></span>Tests · 19 Passing</a>
+
+  <div class="nav-section-label">Next Steps</div>
+  <a href="#exercises"><span class="dot"></span>Exercises</a>
+  <a href="#production"><span class="dot"></span>Production Upgrade</a>
+  <a href="#takeaways"><span class="dot"></span>Key Takeaways</a>
+</nav>
+
+<!-- ═══ MAIN ══════════════════════════════════════════════════════════ -->
+<main>
+
+  <!-- HERO -->
+  <div class="hero" id="overview">
+    <div class="hero-eyebrow">MLOps Lab Series · Exercise 7</div>
+    <h1>FastAPI <span>Model Serving</span><br>with Agentic-Ops</h1>
+    <p class="hero-desc">
+      Wrap a registered MLflow model in a production-grade FastAPI service — then add an
+      <strong>agent-native layer</strong> so LLM agents can discover and call your model
+      without any hand-written adapter code.
+    </p>
+    <div class="hero-tags">
+      <span class="tag tag-teal">FastAPI</span>
+      <span class="tag tag-amber">MLflow Registry</span>
+      <span class="tag tag-blue">Pydantic v2</span>
+      <span class="tag tag-coral">Agentic-Ops</span>
+      <span class="tag tag-purple">OpenAI Tool Schema</span>
+      <span class="tag tag-green">19 Tests Passing</span>
+    </div>
+  </div>
+
+  <!-- OBJECTIVES -->
+  <section id="objectives">
+    <div class="section-label">01 · Learning Objectives</div>
+    <h2>What you'll master</h2>
+    <div class="section-divider"></div>
+    <div class="objectives-grid">
+      <div class="obj-card">
+        <div class="obj-icon">🔗</div>
+        <div>
+          <h4>MLflow Alias URI</h4>
+          <p>Load via <code style="color:var(--teal);font-family:var(--font-mono);font-size:11px">models:/name@champion</code> — the modern replacement for deprecated stage-based URIs.</p>
+        </div>
+      </div>
+      <div class="obj-card">
+        <div class="obj-icon">⚡</div>
+        <div>
+          <h4>FastAPI Lifespan</h4>
+          <p>Load the model exactly once at startup using <code style="color:var(--teal);font-family:var(--font-mono);font-size:11px">@asynccontextmanager</code> — clean, crash-resilient.</p>
+        </div>
+      </div>
+      <div class="obj-card">
+        <div class="obj-icon">✅</div>
+        <div>
+          <h4>Pydantic v2 Validation</h4>
+          <p>Auto-validate every request boundary. Malformed payloads get a 422 before touching inference code.</p>
+        </div>
+      </div>
+      <div class="obj-card">
+        <div class="obj-icon">🏃</div>
+        <div>
+          <h4>BackgroundTasks</h4>
+          <p>Store prediction traces after the response is sent — zero latency impact on the client.</p>
+        </div>
+      </div>
+      <div class="obj-card">
+        <div class="obj-icon">🤖</div>
+        <div>
+          <h4>OpenAI Tool Schema</h4>
+          <p>Expose your service so GPT-4o, Claude, Gemini can call it autonomously — no wrapper code needed.</p>
+        </div>
+      </div>
+      <div class="obj-card">
+        <div class="obj-icon">🔄</div>
+        <div>
+          <h4>HITL Feedback Loop</h4>
+          <p>Trace → human review → label storage → retraining. The full data flywheel from day one.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BACKGROUND CONCEPTS -->
+  <section id="concepts">
+    <div class="section-label">02 · Background Concepts</div>
+    <h2>Three ideas to understand first</h2>
+    <div class="section-divider"></div>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="concept-icon">🚀</div>
+        <h4>Why FastAPI?</h4>
+        <p>Automatic schema validation via Pydantic, instant OpenAPI docs at <code style="color:var(--teal);font-size:11px">/docs</code>, and async-first design that keeps the event loop free while sklearn does CPU work in a thread pool.</p>
+      </div>
+      <div class="concept-card">
+        <div class="concept-icon">🏷️</div>
+        <h4>Model Aliases</h4>
+        <p>MLflow 2.x replaced <code style="color:var(--coral);font-size:11px">Production</code> stages with aliases. <code style="color:var(--teal);font-size:11px">@champion</code> is a mutable pointer — move it to promote a new version without changing serving code.</p>
+      </div>
+      <div class="concept-card">
+        <div class="concept-icon">🧠</div>
+        <h4>Agentic-Ops</h4>
+        <p>Designing ML APIs so <strong>LLM agents are first-class consumers</strong> — self-describing schemas, structured responses with hints, feedback collection, and auditable traces.</p>
+      </div>
+    </div>
+
+    <h3>Alias URI — old vs new</h3>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">python</span>
+        <div class="code-dots"><span></span><span></span><span></span></div>
+      </div>
+      <div class="code-body"><span class="cm"># ❌ Old — deprecated in MLflow 2.x</span>
+<span class="tx">model_uri = </span><span class="st">"models:/churn_classifier/Production"</span>
+
+<span class="cm"># ✅ New — alias-based, decoupled from version numbers</span>
+<span class="tx">model_uri = </span><span class="st">"models:/churn_classifier@champion"</span>
+
+<span class="cm"># To promote a new version: just move the alias — no code change needed</span>
+<span class="tx">client.set_registered_model_alias(</span><span class="st">"churn_classifier"</span><span class="tx">, </span><span class="st">"champion"</span><span class="tx">, </span><span class="st">"4"</span><span class="tx">)</span></div>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE -->
+  <section id="architecture">
+    <div class="section-label">03 · Architecture</div>
+    <h2>Two layers, one service</h2>
+    <div class="section-divider"></div>
+
+    <div class="layer-container">
+      <div class="layer-card layer-rest">
+        <div class="layer-title">🔵 Standard REST Layer</div>
+        <div class="layer-desc">The minimum viable ML API — health, metadata, inference. Works with any HTTP client.</div>
+        <ul class="layer-endpoints">
+          <li><span class="method m-get">GET</span> /health</li>
+          <li><span class="method m-get">GET</span> /metrics</li>
+          <li><span class="method m-get">GET</span> /model/info</li>
+          <li><span class="method m-post">POST</span> /predict</li>
+          <li><span class="method m-post">POST</span> /predict/batch</li>
+        </ul>
+      </div>
+      <div class="layer-card layer-agent">
+        <div class="layer-title">🟢 Agentic-Ops Layer</div>
+        <div class="layer-desc">Makes the service agent-native — LLMs can discover and call it with zero hand-written adapter code.</div>
+        <ul class="layer-endpoints">
+          <li><span class="method m-get">GET</span> /agent/schema</li>
+          <li><span class="method m-post">POST</span> /agent/invoke</li>
+          <li><span class="method m-post">POST</span> /agent/feedback</li>
+          <li><span class="method m-get">GET</span> /agent/trace/{id}</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Request flow</h3>
+    <div class="flow-diagram">
+      <div class="flow-row">
+        <div class="flow-box flow-client">Client Request</div>
+        <div class="flow-arrow">──▶</div>
+        <div class="flow-box flow-route">FastAPI Route</div>
+        <div class="flow-arrow">──▶</div>
+        <div class="flow-box flow-route">Pydantic validate</div>
+        <div class="flow-arrow">──▶</div>
+        <div class="flow-box flow-infer">_run_inference()</div>
+      </div>
+      <div style="margin: 8px 0 8px 16px; color: var(--text-faint); font-size:11px">↓ 422 on invalid input (never reaches model)</div>
+      <div class="flow-row">
+        <div class="flow-box flow-infer">PredictResponse</div>
+        <div class="flow-arrow">──▶</div>
+        <div class="flow-box flow-client">Client ← response sent here</div>
+      </div>
+      <div style="margin: 8px 0 0 16px; color: var(--text-faint); font-size:11px">↓ BackgroundTask runs <em>after</em> response — zero latency added</div>
+      <div class="flow-row" style="margin-top:4px">
+        <div class="flow-box flow-bg">_store_trace() → _state["traces"]</div>
+        <div class="flow-note">← runs after client receives response</div>
+      </div>
+    </div>
+
+    <h3>Agentic-Ops calling pattern</h3>
+    <div class="agent-flow">
+      <div class="agent-side agent-left">
+        <div class="agent-side-title">🤖 LLM Agent</div>
+        <div class="agent-step"><span class="step-num">1</span>GET /agent/schema — read tool spec once</div>
+        <div class="agent-step"><span class="step-num">2</span>POST /agent/invoke — call model as function</div>
+        <div class="agent-step"><span class="step-num">3</span>Use explanation_hint in reply to user</div>
+        <div class="agent-step"><span class="step-num">4</span>POST /agent/feedback — human corrects label</div>
+      </div>
+      <div class="agent-connector">
+        <div class="agent-arrow">⟷</div>
+      </div>
+      <div class="agent-side agent-right">
+        <div class="agent-side-title">🟢 API Service</div>
+        <div class="agent-step"><span class="step-num">→</span>Returns OpenAI-compatible tool JSON</div>
+        <div class="agent-step"><span class="step-num">→</span>Returns result + call_id + explanation_hint</div>
+        <div class="agent-step"><span class="step-num">→</span>Stores trace in background</div>
+        <div class="agent-step"><span class="step-num">→</span>Records (trace_id, correct_label) for RLHF</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OPS ENDPOINTS -->
+  <section id="ops-endpoints">
+    <div class="section-label">04 · API Reference</div>
+    <h2>Ops Endpoints</h2>
+    <div class="section-divider"></div>
+
+    <div class="endpoint-group">
+      <div class="endpoint-group-title">Operations</div>
+
+      <div class="endpoint-card" onclick="toggleCard(this)">
+        <div class="endpoint-header">
+          <span class="method m-get">GET</span>
+          <span class="endpoint-path">/health</span>
+          <span class="endpoint-desc">Liveness probe — "ok" or "degraded"</span>
+        </div>
+        <div class="endpoint-body">
+          <p style="font-size:13px;margin-top:14px">Returns <code style="color:var(--green);font-family:var(--font-mono)">ok</code> when the model is loaded, <code style="color:var(--coral);font-family:var(--font-mono)">degraded</code> if model load failed — the server still runs, inference returns 503. This deliberate design avoids crash-loop restarts in Kubernetes.</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json · response</span><div class="code-dots"><span></span><span></span><span></span></div></div>
+            <div class="code-body">{ <span class="st">"status"</span>: <span class="st">"ok"</span>, <span class="st">"model_loaded"</span>: <span class="kw">true</span>, <span class="st">"uptime_s"</span>: <span class="num">142.7</span> }</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="endpoint-card" onclick="toggleCard(this)">
+        <div class="endpoint-header">
+          <span class="method m-get">GET</span>
+          <span class="endpoint-path">/metrics</span>
+          <span class="endpoint-desc">Prometheus-compatible plain-text counters</span>
+        </div>
+        <div class="endpoint-body">
+          <p style="font-size:13px;margin-top:14px">Prometheus-style key-value metrics. Swap for <code style="color:var(--teal);font-family:var(--font-mono);font-size:11.5px">prometheus_fastapi_instrumentator</code> in production to get latency histograms.</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">text · response</span><div class="code-dots"><span></span><span></span><span></span></div></div>
+            <div class="code-body">model_requests_total 48
+model_errors_total 0
+model_version_info{version="3"} 1
+traces_stored 48
+feedback_records 2</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="endpoint-card" onclick="toggleCard(this)">
+        <div class="endpoint-header">
+          <span class="method m-get">GET</span>
+          <span class="endpoint-path">/model/info</span>
+          <span class="endpoint-desc">Registered model metadata and request counters</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json · response</span><div class="code-dots"><span></span><span></span><span></span></div></div>
+            <div class="code-body">{ <span class="st">"name"</span>: <span class="st">"churn_classifier"</span>, <span class="st">"alias"</span>: <span class="st">"champion"</span>,
+  <span class="st">"version"</span>: <span class="st">"3"</span>, <span class="st">"loaded_at"</span>: <span class="num">1710000000.0</span>,
+  <span class="st">"request_count"</span>: <span class="num">48</span>, <span class="st">"error_count"</span>: <span class="num">0</span> }</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INFERENCE ENDPOINTS -->
+  <section id="inference-endpoints">
+    <h2>Inference Endpoints</h2>
+    <div class="section-divider"></div>
+
+    <div class="endpoint-group">
+      <div class="endpoint-group-title">Inference</div>
+
+      <div class="endpoint-card" onclick="toggleCard(this)">
+        <div class="endpoint-header">
+          <span class="method m-post">POST</span>
+          <span class="endpoint-path">/predict</span>
+          <span class="endpoint-desc">Single-row inference with trace ID</span>
+        </div>
+        <div class="endpoint-body">
+          <p style="font-size:13px;margin-top:14px">Every prediction gets a UUID trace ID stored in the background. Set <code style="color:var(--teal);font-family:var(--font-mono);font-size:11.5px">return_proba: true</code> to get class probabilities instead of a hard label.</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json · request</span><div class="code-dots"><span></span><span></span><span></span></div></div>
+            <div class="code-body">{ <span class="st">"features"</span>: {
+    <span class="st">"tenure"</span>: <span class="num">6</span>, <span class="st">"monthly_charges"</span>: <span class="num">89.0</span>,
+    <span class="st">"total_charges"</span>: <span class="num">534.0</span>,
+    <span class="st">"contract_type"</span>: <span class="st">"Month-to-month"</span>,
+    <span class="st">"internet_service"</span>: <span class="st">"Fiber optic"</span>,
+    <span class="st">"tech_support"</span>: <span class="st">"No"</span>
+  }, <span class="st">"return_proba"</span>: <span class="kw">false</span> }</div>
+          </div>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json · response</span><div class="code-dots"><span></span><span></span><span></span></div></div>
+            <div class="code-body">{ <span class="st">"trace_id"</span>: <span class="st">"f47ac10b-58cc-4372-a567-0e02b2c3d479"</span>,
+  <span class="st">"prediction"</span>: <span class="num">1</span>, <span class="st">"model_version"</span>: <span class="st">"3"</span>,
+  <span class="st">"latency_ms"</span>: <span class="num">4.21</span> }</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="endpoint-card" onclick="toggleCard(this)">
+        <div class="endpoint-header">
+          <span class="method m-post">POST</span>
+          <span class="endpoint-path">/predict/batch</span>
+          <span class="endpoint-desc">Batch inference · 1–512 rows · one trace ID per row</span>
+        </div>
+        <div class="endpoint-body">
+          <p style="font-size:13px;margin-top:14px">Builds a single DataFrame from all rows and calls <code style="color:var(--teal);font-family:var(--font-mono);font-size:11.5px">model.predict(df)</code> once — far more efficient than looping over single-row calls. The <code style="color:var(--teal);font-family:var(--font-mono);font-size:11.5px">max_length=512</code> guard prevents runaway memory from huge payloads.</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json · response</span><div class="code-dots"><span></span><span></span><span></span></div></div>
+            <div class="code-body">{ <span class="st">"trace_ids"</span>: [<span class="st">"f47ac10b-..."</span>, <span class="st">"a1b2c3d4-..."</span>],
+  <span class="st">"predictions"</span>: [<span class="num">1</span>, <span class="num">0</span>],
+  <span class="st">"model_version"</span>: <span class="st">"3"</span>, <span class="st">"latency_ms"</span>: <span class="num">6.88</span> }</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AGENTIC-OPS ENDPOINTS -->
+  <section id="agent-endpoints">
+    <h2>Agentic-Ops Endpoints</h2>
+    <div class="section-divider"></div>
+    <p>Four endpoints that make this service callable by any LLM agent framework — OpenAI function-calling, Anthropic tool-use, LangChain, LlamaIndex, AutoGen — without any hand-written wrapper.</p>
+
+    <div class="endpoint-group">
+      <div class="endpoint-group-title">Agentic-Ops</div>
+
+      <div class="endpoint-card" onclick="toggleCard(this)">
+        <div class="endpoint-header">
+          <span class="method m-get">GET</span>
+          <span class="endpoint-path">/agent/schema</span>
+          <span class="endpoint-desc">OpenAI-compatible tool spec — the agent reads this once</span>
+        </div>
+        <div class="endpoint-body">
+          <p style="font-size:13px;margin-top:14px">Returns a JSON schema matching the OpenAI function-calling format exactly. The <code style="color:var(--teal);font-family:var(--font-mono);font-size:11.5px">enum</code> constraints on categorical fields prevent the LLM from hallucinating invalid values like <code style="color:var(--coral);font-family:var(--font-mono);font-size:11.5px">"Monthly"</code> for <code style="color:var(--coral);font-family:var(--font-mono);font-size:11.5px">contract_type</code>.</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json · response</span><div class="code-dots"><span></span><span></span><span></span></div></div>
+            <div class="code-body">{ <span class="st">"type"</span>: <span class="st">"function"</span>,
+  <span class="st">"function"</span>: {
+    <span class="st">"name"</span>: <span class="st">"predict_churn"</span>,
+    <span class="st">"description"</span>: <span class="st">"Predict customer churn probability..."</span>,
+    <span class="st">"parameters"</span>: {
+      <span class="st">"type"</span>: <span class="st">"object"</span>,
+      <span class="st">"properties"</span>: {
+        <span class="st">"tenure"</span>:      { <span class="st">"type"</span>: <span class="st">"integer"</span>, <span class="st">"description"</span>: <span class="st">"Months as customer"</span> },
+        <span class="st">"contract_type"</span>:{ <span class="st">"type"</span>: <span class="st">"string"</span>,
+                          <span class="st">"enum"</span>: [<span class="st">"Month-to-month"</span>, <span class="st">"One year"</span>, <span class="st">"Two year"</span>] },
+        <span class="cm">// ... more fields ...</span>
+      },
+      <span class="st">"required"</span>: [<span class="st">"tenure"</span>, <span class="st">"monthly_charges"</span>, <span class="st">"total_charges"</span>, <span class="cm">...</span>]
+    }
+  }
+}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="endpoint-card" onclick="toggleCard(this)">
+        <div class="endpoint-header">
+          <span class="method m-post">POST</span>
+          <span class="endpoint-path">/agent/invoke</span>
+          <span class="endpoint-desc">LLM-callable inference · returns call_id + explanation hint</span>
+        </div>
+        <div class="endpoint-body">
+          <p style="font-size:13px;margin-top:14px">Mirrors <code style="color:var(--teal);font-family:var(--font-mono);font-size:11.5px">/predict</code> with two additions: the <code style="color:var(--teal);font-family:var(--font-mono);font-size:11.5px">call_id</code> is echoed back so the LLM can match responses to tool-call IDs (required by OpenAI's protocol), and <code style="color:var(--teal);font-family:var(--font-mono);font-size:11.5px">explanation_hint</code> gives the LLM a plain-English reason to narrate.</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json · response</span><div class="code-dots"><span></span><span></span><span></span></div></div>
+            <div class="code-body">{ <span class="st">"call_id"</span>: <span class="st">"call_abc123"</span>,
+  <span class="st">"trace_id"</span>: <span class="st">"d290f1ee-..."</span>,
+  <span class="st">"result"</span>: <span class="num">1</span>,
+  <span class="st">"model_version"</span>: <span class="st">"3"</span>,
+  <span class="st">"latency_ms"</span>: <span class="num">3.94</span>,
+  <span class="st">"explanation_hint"</span>: <span class="st">"month-to-month contracts are a strong churn driver; short tenure increases churn risk"</span> }</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="endpoint-card" onclick="toggleCard(this)">
+        <div class="endpoint-header">
+          <span class="method m-post">POST</span>
+          <span class="endpoint-path">/agent/feedback</span>
+          <span class="endpoint-desc">Human-in-the-loop label collection · RLHF data flywheel</span>
+        </div>
+        <div class="endpoint-body">
+          <p style="font-size:13px;margin-top:14px">Stores <code style="color:var(--teal);font-family:var(--font-mono);font-size:11.5px">(trace_id, correct_label)</code> pairs. A 404 is returned if the trace ID is unknown — enforcing referential integrity. Drain these records into a retraining dataset for the online learning loop.</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json · request</span><div class="code-dots"><span></span><span></span><span></span></div></div>
+            <div class="code-body">{ <span class="st">"trace_id"</span>: <span class="st">"d290f1ee-..."</span>,
+  <span class="st">"correct_label"</span>: <span class="num">1</span>,
+  <span class="st">"annotator"</span>: <span class="st">"alice@company.com"</span>,
+  <span class="st">"notes"</span>: <span class="st">"Customer cancelled the next day."</span> }</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="endpoint-card" onclick="toggleCard(this)">
+        <div class="endpoint-header">
+          <span class="method m-get">GET</span>
+          <span class="endpoint-path">/agent/trace/{trace_id}</span>
+          <span class="endpoint-desc">Prediction audit log · inputs + outputs + timestamp</span>
+        </div>
+        <div class="endpoint-body">
+          <p style="font-size:13px;margin-top:14px">Used by guardrail systems that need to inspect what was predicted, explainability pipelines that attach SHAP values post-hoc, and audit logs in regulated industries (finance, healthcare).</p>
+          <div class="code-block">
+            <div class="code-header"><span class="code-lang">json · response</span><div class="code-dots"><span></span><span></span><span></span></div></div>
+            <div class="code-body">{ <span class="st">"trace_id"</span>: <span class="st">"d290f1ee-..."</span>,
+  <span class="st">"features"</span>: { <span class="st">"tenure"</span>: <span class="num">3</span>, <span class="st">"monthly_charges"</span>: <span class="num">95.0</span>, <span class="cm">...</span> },
+  <span class="st">"prediction"</span>: <span class="num">1</span>,
+  <span class="st">"model_version"</span>: <span class="st">"3"</span>,
+  <span class="st">"timestamp"</span>: <span class="num">1710000123.45</span>,
+  <span class="st">"latency_ms"</span>: <span class="num">3.94</span> }</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CODE WALKTHROUGH -->
+  <section id="code">
+    <div class="section-label">05 · Code Walkthrough</div>
+    <h2>Key implementation decisions</h2>
+    <div class="section-divider"></div>
+
+    <h3>Lifespan — graceful degradation on load failure</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">python · app/main.py</span><div class="code-dots"><span></span><span></span><span></span></div></div>
+      <div class="code-body"><span class="dc">@asynccontextmanager</span>
+<span class="kw">async def</span> <span class="fn">lifespan</span><span class="tx">(app: FastAPI):</span>
+    <span class="kw">try</span><span class="tx">:</span>
+        <span class="tx">model_uri = </span><span class="fn">f</span><span class="st">"models:/{MODEL_NAME}@{MODEL_ALIAS}"</span>
+        <span class="tx">_state[</span><span class="st">"model"</span><span class="tx">] = mlflow.pyfunc.load_model(model_uri)</span>
+        <span class="tx">_state[</span><span class="st">"loaded_at"</span><span class="tx">] = time.time()</span>
+    <span class="kw">except</span> <span class="tx">Exception </span><span class="kw">as</span><span class="tx"> exc:</span>
+        <span class="cm">  # Don't crash — /health reports "degraded", /predict returns 503</span>
+        <span class="tx">log.error(</span><span class="st">"Model load failed: %s"</span><span class="tx">, exc)</span>
+    <span class="kw">yield</span>  <span class="cm"># ← server runs here</span></div>
+    </div>
+    <p>A server that reports <code style="color:var(--amber);font-family:var(--font-mono);font-size:12px">degraded</code> health is far easier to debug than one that crash-loops every 30 seconds in Kubernetes. The health endpoint is your first debugging surface.</p>
+
+    <h3>BackgroundTasks — zero latency trace storage</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">python · app/main.py</span><div class="code-dots"><span></span><span></span><span></span></div></div>
+      <div class="code-body"><span class="kw">def</span> <span class="fn">predict</span><span class="tx">(req: PredictRequest, background_tasks: BackgroundTasks):</span>
+    <span class="tx">prediction, latency_ms = _run_inference(req.features, req.return_proba)</span>
+    <span class="tx">trace_id = str(uuid.uuid4())</span>
+    <span class="tx">background_tasks.add_task(_store_trace, trace_id, req.features, prediction, latency_ms)</span>
+    <span class="kw">return</span> <span class="tx">PredictResponse(...)  </span><span class="cm"># ← client gets this immediately</span>
+    <span class="cm">    # _store_trace() runs AFTER this return</span></div>
+    </div>
+
+    <h3>predict_proba guard — MLflow pyfunc caveat</h3>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">python · app/main.py</span><div class="code-dots"><span></span><span></span><span></span></div></div>
+      <div class="code-body"><span class="cm"># MLflow pyfunc wrapper doesn't always expose predict_proba</span>
+<span class="cm"># even for classifiers — depends on how the model was logged</span>
+<span class="kw">if</span><span class="tx"> return_proba </span><span class="kw">and</span><span class="tx"> hasattr(_state[</span><span class="st">"model"</span><span class="tx">], </span><span class="st">"predict_proba"</span><span class="tx">):</span>
+    <span class="tx">result = _state[</span><span class="st">"model"</span><span class="tx">].predict_proba(df).tolist()</span>
+<span class="kw">else</span><span class="tx">:</span>
+    <span class="tx">raw = _state[</span><span class="st">"model"</span><span class="tx">].predict(df)</span>
+    <span class="tx">result = raw.tolist() </span><span class="kw">if</span><span class="tx"> hasattr(raw, </span><span class="st">"tolist"</span><span class="tx">) </span><span class="kw">else</span><span class="tx"> raw</span></div>
+    </div>
+    <p>The <code style="color:var(--teal);font-family:var(--font-mono);font-size:12px">hasattr</code> guard prevents a silent fallback. The caller knows whether they got probabilities or labels.</p>
+  </section>
+
+  <!-- TESTS -->
+  <section id="tests">
+    <div class="section-label">06 · Tests</div>
+    <h2>19 passing · fully mocked</h2>
+    <div class="section-divider"></div>
+    <p>The test suite uses <code style="color:var(--teal);font-family:var(--font-mono);font-size:12px">unittest.mock.patch</code> to intercept all MLflow calls — no tracking server, no live FastAPI server. <code style="color:var(--teal);font-family:var(--font-mono);font-size:12px">TestClient</code> runs the ASGI app in-process.</p>
+
+    <div class="test-results">
+      <div class="test-pass">tests/test_api.py::TestHealth::test_ok                              PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestHealth::test_uptime_positive                 PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestMetrics::test_metrics_text                   PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestModelInfo::test_version_present              PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestPredict::test_basic                          PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestPredict::test_trace_id_is_uuid               PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestPredict::test_return_proba                   PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestPredict::test_missing_features_field         PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestBatchPredict::test_basic                     PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestBatchPredict::test_empty_rows_rejected       PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestAgentSchema::test_returns_openai_tool_format PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestAgentSchema::test_schema_has_descriptions    PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestAgentInvoke::test_basic                      PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestAgentInvoke::test_custom_call_id_preserved   PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestAgentInvoke::test_explanation_hint_present_for_high_risk PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestAgentFeedback::test_record_feedback          PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestAgentFeedback::test_feedback_unknown_trace   PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestAgentTrace::test_retrieve_trace              PASSED</div>
+      <div class="test-pass">tests/test_api.py::TestAgentTrace::test_missing_trace_404           PASSED</div>
+      <div class="test-info" style="margin-top:8px">=====================================</div>
+      <div class="test-summary">19 passed in 7.51s</div>
+    </div>
+  </section>
+
+  <!-- EXERCISES -->
+  <section id="exercises">
+    <div class="section-label">07 · Exercises</div>
+    <h2>Build on top of this</h2>
+    <div class="section-divider"></div>
+    <p>These build on each other — complete in order for maximum benefit.</p>
+
+    <div class="exercise-list">
+      <div class="exercise-item" onclick="toggleExercise(this)">
+        <div class="exercise-header">
+          <span class="exercise-num">EX 1</span>
+          <span class="exercise-title">Model Hot-Reload</span>
+          <span class="exercise-difficulty diff-medium">Medium</span>
+        </div>
+        <div class="exercise-body">
+          Add a <code style="color:var(--teal);font-family:var(--font-mono);font-size:12px">POST /model/reload</code> endpoint that re-fetches the <code style="color:var(--teal);font-family:var(--font-mono);font-size:12px">@champion</code> alias without restarting the server. Guard with <code style="color:var(--teal);font-family:var(--font-mono);font-size:12px">asyncio.Lock</code> to prevent concurrent reloads. The old model should remain in service until the new one is fully loaded. Return both the old and new version numbers in the response.
+        </div>
+      </div>
+
+      <div class="exercise-item" onclick="toggleExercise(this)">
+        <div class="exercise-header">
+          <span class="exercise-num">EX 2</span>
+          <span class="exercise-title">Real SHAP Explanations</span>
+          <span class="exercise-difficulty diff-hard">Hard</span>
+        </div>
+        <div class="exercise-body">
+          Replace the heuristic stubs in <code style="color:var(--teal);font-family:var(--font-mono);font-size:12px">_build_explanation_hint()</code> with actual SHAP values. Use <code style="color:var(--teal);font-family:var(--font-mono);font-size:12px">shap.LinearExplainer</code> for logistic regression or <code style="color:var(--teal);font-family:var(--font-mono);font-size:12px">shap.TreeExplainer</code> for tree models. Pre-compute the explainer at startup and cache it. Return the top-3 features by absolute SHAP value formatted as a string the LLM can narrate naturally.
+        </div>
+      </div>
+
+      <div class="exercise-item" onclick="toggleExercise(this)">
+        <div class="exercise-header">
+          <span class="exercise-num">EX 3</span>
+          <span class="exercise-title">Prometheus Integration</span>
+          <span class="exercise-difficulty diff-easy">Easy</span>
+        </div>
+        <div class="exercise-body">
+          Swap the hand-rolled <code style="color:var(--teal);font-family:var(--font-mono);font-size:12px">/metrics</code> endpoint for <code style="color:var(--teal);font-family:var(--font-mono);font-size:12px">prometheus_fastapi_instrumentator</code>. This adds a latency histogram (not just counters) compatible with Grafana dashboards. Configure a local Prometheus instance to scrape and visualise the p50/p95/p99 latency distribution.
+        </div>
+      </div>
+
+      <div class="exercise-item" onclick="toggleExercise(this)">
+        <div class="exercise-header">
+          <span class="exercise-num">EX 4</span>
+          <span class="exercise-title">Live LLM Agent Demo</span>
+          <span class="exercise-difficulty diff-hard">Hard</span>
+        </div>
+        <div class="exercise-body">
+          Wire <code style="color:var(--teal);font-family:var(--font-mono);font-size:12px">/agent/schema</code> + <code style="color:var(--teal);font-family:var(--font-mono);font-size:12px">/agent/invoke</code> into a real LLM using function-calling. The LLM should accept a natural-language customer description, extract structured features, call the churn tool, and reply to the user using the <code style="color:var(--teal);font-family:var(--font-mono);font-size:12px">explanation_hint</code>. Works with OpenAI, Anthropic, or any function-calling model.
+        </div>
+      </div>
+
+      <div class="exercise-item" onclick="toggleExercise(this)">
+        <div class="exercise-header">
+          <span class="exercise-num">EX 5</span>
+          <span class="exercise-title">Online Retraining Loop</span>
+          <span class="exercise-difficulty diff-hard">Hard</span>
+        </div>
+        <div class="exercise-body">
+          Close the full human-in-the-loop cycle: add <code style="color:var(--teal);font-family:var(--font-mono);font-size:12px">GET /agent/feedback/export</code>, write a retrain script that joins feedback with traces into a labelled DataFrame, registers a new MLflow version, sets the <code style="color:var(--teal);font-family:var(--font-mono);font-size:12px">@champion</code> alias, and triggers a hot-reload. Inference → human feedback → retraining → deployment → inference.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCTION -->
+  <section id="production">
+    <div class="section-label">08 · Production Upgrade Path</div>
+    <h2>Replacing the in-memory shortcuts</h2>
+    <div class="section-divider"></div>
+    <p>Every simplification in this exercise is intentional — it keeps the code readable. Here is the production replacement for each.</p>
+
+    <table class="prod-table">
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Dev (this exercise)</th>
+          <th>Production</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Trace store</td><td>dict in _state</td><td>Redis (TTL-based) or PostgreSQL</td></tr>
+        <tr><td>Feedback store</td><td>list in _state</td><td>PostgreSQL + async writer</td></tr>
+        <tr><td>Metrics</td><td>Hand-rolled plain text</td><td>prometheus_fastapi_instrumentator</td></tr>
+        <tr><td>Model state</td><td>Module-level dict</td><td>Single worker + asyncio.Lock, or Redis for multi-worker</td></tr>
+        <tr><td>Model loading</td><td>Sync at startup</td><td>asyncio.to_thread() for large models</td></tr>
+        <tr><td>Batch size limit</td><td>Pydantic max_length=512</td><td>Queue-based with dynamic max wait (Triton, Ray Serve)</td></tr>
+        <tr><td>Explanation hints</td><td>Heuristic stubs</td><td>SHAP pre-computed at load, cached per feature hash</td></tr>
+        <tr><td>Authentication</td><td>None</td><td>OAuth2 / API key middleware</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- TAKEAWAYS -->
+  <section id="takeaways">
+    <div class="section-label">09 · Key Takeaways</div>
+    <h2>What to remember</h2>
+    <div class="section-divider"></div>
+
+    <div class="takeaway-grid">
+      <div class="takeaway-card">
+        <h4>Aliases decouple serving from versioning</h4>
+        <p>The model URI <code style="color:var(--teal);font-family:var(--font-mono);font-size:11px">models:/churn@champion</code> stays constant forever. The MLOps team moves the alias to promote or roll back — zero code changes in the serving layer.</p>
+      </div>
+      <div class="takeaway-card">
+        <h4>Lifespan is the right place for one-time setup</h4>
+        <p>Load the model once, before the first request. The reference lives for the entire process lifetime. Fail gracefully — report <code style="color:var(--amber);font-family:var(--font-mono);font-size:11px">degraded</code> rather than crash-looping.</p>
+      </div>
+      <div class="takeaway-card">
+        <h4>BackgroundTasks keep inference latency clean</h4>
+        <p>Trace storage, metrics updates, and logging that don't affect the response should always be backgrounded. The client should never wait for bookkeeping.</p>
+      </div>
+      <div class="takeaway-card">
+        <h4>The tool schema is the contract</h4>
+        <p>The most critical part of the agentic layer. It must be accurate, include <code style="color:var(--amber);font-family:var(--font-mono);font-size:11px">enum</code> constraints for all categorical inputs, and be versioned alongside the model.</p>
+      </div>
+      <div class="takeaway-card">
+        <h4>Agent-native is additive, not a replacement</h4>
+        <p>The <code style="color:var(--teal);font-family:var(--font-mono);font-size:11px">/agent/*</code> endpoints sit alongside standard REST. Same model, same inference logic, two calling contracts — one for humans, one for LLMs.</p>
+      </div>
+      <div class="takeaway-card">
+        <h4>The feedback endpoint is where the flywheel starts</h4>
+        <p>Design the HITL collection endpoint from day one. Every incorrect prediction that gets corrected feeds the next model version. Retrofitting this later is far more expensive than building it upfront.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  // Toggle endpoint cards
+  function toggleCard(el) {
+    el.classList.toggle('open');
+  }
+
+  // Toggle exercise items
+  function toggleExercise(el) {
+    el.classList.toggle('open');
+  }
+
+  // Scroll progress bar
+  const progress = document.getElementById('progress');
+  window.addEventListener('scroll', () => {
+    const total = document.body.scrollHeight - window.innerHeight;
+    progress.style.width = (window.scrollY / total * 100) + '%';
+  });
+
+  // Active nav link on scroll
+  const sections = document.querySelectorAll('section[id], div[id]');
+  const navLinks = document.querySelectorAll('nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        navLinks.forEach(a => {
+          a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  document.querySelectorAll('[id]').forEach(el => observer.observe(el));
+
+  // Reveal sections on scroll
+  const sectionObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.05 });
+
+  document.querySelectorAll('section').forEach(s => sectionObserver.observe(s));
+
+  // Open all endpoint cards when their section scrolls into view
+  // (small UX hint — auto-open first card in each group)
+  document.querySelectorAll('.endpoint-group').forEach(group => {
+    const first = group.querySelector('.endpoint-card');
+    if (first) first.classList.add('open');
+  });
+</script>
+</body>
+</html>
