@@ -3,7 +3,6 @@
 > **Series position:** Builds directly on Exercise 5 (MLflow Model Registry).  
 > The registered model artifact produced there is the starting point for everything here.
 
----
 
 ## Table of Contents
 
@@ -39,8 +38,6 @@
 11. [Production Upgrade Path](#production-upgrade-path)
 12. [Key Takeaways](#key-takeaways)
 
----
-
 ## Overview
 
 This exercise wraps a model registered in the **MLflow Model Registry** in a production-grade **FastAPI** service. You will build two layers simultaneously:
@@ -51,7 +48,6 @@ This exercise wraps a model registered in the **MLflow Model Registry** in a pro
 
 The domain is **customer churn prediction** (Telco dataset), but every pattern here generalises to any classification or regression model registered in MLflow.
 
----
 
 ## Learning Objectives
 
@@ -65,7 +61,6 @@ By the end of this exercise you will be able to:
 - Understand the **HITL feedback loop**: how a prediction trace flows from inference → human review → label storage → future retraining.
 - Write a **pytest suite** that mocks MLflow entirely so tests run offline in CI.
 
----
 
 ## Background Concepts
 
@@ -114,8 +109,6 @@ A conventional ML API is designed for application developers who read documentat
 
 This exercise implements all four pieces. The `/agent/*` prefix is a naming convention; the important thing is the contract each endpoint satisfies.
 
----
-
 ## Project Structure
 
 ```
@@ -154,10 +147,9 @@ httpx>=0.27.0        # for notebook smoke-tests
 pytest>=8.2.0
 ```
 
+main.py
 ```
 """
-main.py
-
 Exercise 6 – FastAPI Model Serving
 ===================================
 Serves a model registered in the MLflow Model Registry and exposes:
@@ -2063,7 +2055,7 @@ This enforces referential integrity: you cannot submit feedback for a prediction
 
 A simple dict lookup. The design choice here is that traces are stored by the inference endpoints as a background task (low overhead) and retrieved on-demand. This is appropriate when retrieval is infrequent (audits, investigations). If a guardrail system needs to intercept *every* prediction synchronously, push traces to a queue and have the guardrail consume from it instead.
 
----
+
 
 ## Running the Tests
 
@@ -2099,7 +2091,7 @@ tests/test_api.py::TestAgentTrace::test_missing_trace_404           PASSED
 
 No live MLflow server, no live FastAPI server — `TestClient` runs the ASGI app in-process.
 
----
+
 
 ## Exercises
 
@@ -2203,7 +2195,6 @@ Drain the feedback records accumulated by `POST /agent/feedback` and use them to
 
 This closes the full human-in-the-loop cycle: inference → human feedback → retraining → deployment → inference.
 
----
 
 ## Production Upgrade Path
 
