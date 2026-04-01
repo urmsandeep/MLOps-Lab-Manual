@@ -1,4 +1,4 @@
-# Exercise 6 — FastAPI Model Serving with Agentic-Ops
+# FastAPI Model Serving with Agentic-Ops
 
 > **Series position:** Builds directly on Exercise 5 (MLflow Model Registry).  
 > The registered model artifact produced there is the starting point for everything here.
