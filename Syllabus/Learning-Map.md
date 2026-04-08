@@ -13,7 +13,7 @@ Each exercise builds on the previous one to simulate how ML systems are develope
 | Exercise 03 | Multi-metric evaluation (MAE, RMSE, R²), model selection using MLflow | Evaluation, Versioning | https://github.com/urmsandeep/MLOps-Lab-Manual/blob/main/Exercises/3-Multi-Metric-MLflow-Model-Selection.md |
 | Exercise 04 | Packaging ML model using Docker, ensuring reproducibility | Deployment (Packaging) | https://github.com/urmsandeep/MLOps-Lab-Manual/blob/main/Exercises/4-Docker-for-Model-Packaging.md |
 | Exercise 05 | Model optimization using hyperparameter tuning | Training (Advanced) | https://github.com/urmsandeep/MLOps-Lab-Manual/blob/main/Exercises/5-Hyperparameter-Tuning.md |
-| Exercise 06 | Deploying model using FastAPI (`/predict`, `/health`) | Deployment (Serving) | |
+| Exercise 06 | Deploying model using FastAPI (`/predict`, `/health`) | Deployment (Serving) | https://github.com/urmsandeep/MLOps-Lab-Manual/blob/main/Exercises/6-FastAPI-Model-Serving.md |
 | Exercise 07 | Logging predictions, monitoring inputs/outputs, basic drift detection | Monitoring | |
 | Exercise 08 | Model versioning and promotion (MLflow Model Registry) | Versioning (Advanced) | |
 | Exercise 09 | Retraining pipeline using new data and performance comparison | Retraining | |
