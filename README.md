@@ -2,7 +2,7 @@
 
 This lab follows a real-world MLOps lifecycle. 
 
-Each exercise builds on the previous one to simulate how ML systems are developed and operated in production.
+Each exercise builds on the previous one to demonstrate how ML systems are developed and operated in production.
 
 ## Learning Flow and Exercise Mapping
 
